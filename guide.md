@@ -4,7 +4,7 @@
 
 ## Overview
 
-**muvy** is a movie streaming app built with Flutter. It uses TMDB for movie/TV catalog data and VidSrc for video streams. The app features a dark, glowy, glassmorphic UI inspired by the muvy icon's purple-to-pink gradient palette.
+**muvy** is a movie streaming app built with Flutter. It uses TMDB for movie/TV catalog data and VidSrc for video streams. Features include a **Watch Party** mode powered by WebRTC for synced group viewing. The app features a dark, glowy, glassmorphic UI inspired by the muvy icon's purple-to-pink gradient palette.
 
 ---
 
@@ -164,15 +164,24 @@ lib/
 │   │
 │   ├── player/
 │   │   ├── presentation/
-│   │   │   ├── player_page.dart      # Chewie player + VidSrc WebView
+│   │   │   ├── player_page.dart           # VidSrc WebView + optional party mode
 │   │   │   └── widgets/
 │   │   │       ├── player_controls.dart
 │   │   │       ├── episode_selector.dart
-│   │   │       └── source_selector.dart
+│   │   │       ├── source_selector.dart
+│   │   │       ├── party_overlay.dart     # Participant avatars + sync controls
+│   │   │       ├── invite_sheet.dart      # Share room link via WhatsApp, etc.
+│   │   │       ├── participant_list.dart  # Active viewers list
+│   │   │       └── sync_indicator.dart    # Playback sync status badge
 │   │   └── data/
 │   │       ├── stream_repository.dart
+│   │       ├── party_service.dart         # WebRTC signaling via PeerDart
+│   │       ├── sync_controller.dart       # Playback state sync engine
 │   │       └── models/
-│   │           └── stream_source.dart
+│   │           ├── stream_source.dart
+│   │           ├── party_room.dart        # Room ID, participants, media info
+│   │           ├── participant.dart       # Peer ID, display name, role
+│   │           └── sync_event.dart        # Play, pause, seek, join, leave
 │   │
 │   └── favorites/
 │       ├── presentation/
@@ -208,6 +217,10 @@ lib/
 | `shimmer`                | Loading placeholder effects                 |
 | `google_fonts`           | Inter font family                           |
 | `hive_flutter`           | Local storage for favorites/watchlist        |
+| `peerdart`               | PeerJS port for Dart — WebRTC signaling      |
+| `flutter_webrtc`         | WebRTC data channels (peerdart dependency)   |
+| `uuid`                   | Generate unique room IDs                     |
+| `share_plus`             | Share room invite links via WhatsApp, etc.   |
 
 ### Dev Dependencies
 
@@ -370,7 +383,7 @@ HomeRoute (BottomNav shell)
 
 MovieDetailRoute     — pushed on top
 TvDetailRoute        — pushed on top
-PlayerRoute          — fullscreen dialog
+PlayerRoute          — fullscreen dialog (solo + party mode)
 ```
 
 ---
@@ -411,9 +424,27 @@ PlayerRoute          — fullscreen dialog
 
 ### 5. Player Page (`PlayerRoute`)
 
+Single page with two modes: **solo** (default) and **party** (Watch Party).
+
+**Solo Mode:**
 - **WebView**: Full-screen VidSrc embed
 - **Controls Overlay**: Back button, source selector (if multiple)
 - **Episode Selector** (TV): Bottom sheet to switch episodes
+- **Watch Together Button**: Floating glowing button → creates a room and activates party mode
+- **Join Room Button**: Opens a glassmorphic dialog to type/paste a room ID and join an existing party
+
+**Party Mode** (activated via button, room ID input, or deep link `muvy://party/{roomId}`):
+- **Party Overlay**: Semi-transparent glassmorphic bar showing:
+  - Participant avatars (stacked circles with glow borders)
+  - Participant count badge
+  - Sync status indicator ("In Sync" / "Syncing...")
+- **Synced Playback**: Any participant can play/pause/seek — action is broadcast to all peers
+- **Invite Sheet**: Bottom sheet with:
+  - Room ID displayed in a copyable glassmorphic chip
+  - "Share via WhatsApp" button (pre-filled deep link)
+  - "Share via..." generic share (uses `share_plus`)
+- **Participant List**: Expandable list showing who's watching
+- **Leave Party**: Exit button disconnects peer and returns to solo mode
 
 ### 6. Favorites Page (`FavoritesRoute`)
 
@@ -445,10 +476,125 @@ Glassmorphic bottom nav with 4 tabs:
 Using **Riverpod** for state:
 
 ```
-Provider        → Dio client, repositories
-FutureProvider  → API calls (trending, popular, etc.)
-StateProvider   → Filters, search query
+Provider         → Dio client, repositories
+FutureProvider   → API calls (trending, popular, etc.)
+StateProvider    → Filters, search query
 NotifierProvider → Favorites list (backed by Hive)
+NotifierProvider → Watch Party room state, peer connections
+```
+
+---
+
+## Watch Party — WebRTC Architecture
+
+Watch Party uses **PeerDart** (Dart port of PeerJS) for peer-to-peer communication over WebRTC data channels. No custom signaling server is needed — PeerJS's free cloud signaling server handles peer discovery.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────┐
+│                  PeerJS Cloud                   │
+│             (Signaling Server)                  │
+│         Handles peer discovery only             │
+└──────────┬──────────────────┬────────────────────┘
+           │ signaling        │ signaling
+     ┌─────▼─────┐      ┌────▼──────┐
+     │  Host      │◄────►│  Guest    │   ← WebRTC Data Channel (P2P)
+     │  Device    │      │  Device   │      SyncEvents: play, pause,
+     │            │      │           │      seek, join, leave
+     └───────────┘      └───────────┘
+```
+
+### Room Lifecycle
+
+| Step | Action | Detail |
+| ---- | ------ | ------ |
+| 1 | **Create Room** | Host taps "Watch Together" on Player page. A UUID room ID is generated. Host's PeerDart `Peer` is initialized with the room ID as peer ID. |
+| 2 | **Share Invite** | Host shares a deep link: `muvy://party/{roomId}?media={tmdbId}&type={movie|tv}&s={season}&e={episode}`. Shared via WhatsApp, copy link, or generic share. |
+| 3 | **Guest Joins** | Guest opens the deep link → app launches → auto_route resolves `WatchPartyRoute`. Guest's `Peer` connects to host's peer ID (the room ID). The media info from the link auto-loads the correct video. |
+| 4 | **Sync Playback** | All playback actions (play, pause, seek) emit `SyncEvent` messages over the data channel to all connected peers. |
+| 5 | **Leave** | Peer disconnects. Host leaving ends the party for all. |
+
+### SyncEvent Protocol
+
+Messages sent over WebRTC data channels as JSON:
+
+```dart
+class SyncEvent {
+  final SyncAction action;   // play, pause, seek, join, leave
+  final double? position;    // current playback position in seconds
+  final String peerId;       // sender's peer ID
+  final int timestamp;       // milliseconds since epoch (conflict resolution)
+}
+
+enum SyncAction { play, pause, seek, join, leave }
+```
+
+### Key Implementation Details
+
+- **PeerDart** handles signaling via PeerJS cloud — zero backend needed
+- **Data Channels only** — no audio/video streams, just JSON sync messages (lightweight)
+- **Any peer controls**: Every participant can play/pause/seek; action is broadcast to all
+- **Conflict resolution**: Latest `timestamp` wins when simultaneous actions occur
+- **Deep linking**: `muvy://party/{roomId}` is handled by auto_route, auto-opening the video on the guest's device
+- **Reconnection**: If a peer disconnects, they can rejoin using the same room link
+- **Room capacity**: Practical P2P limit ~5-8 peers (mesh topology via PeerDart)
+
+### Party Service (Core Logic)
+
+```dart
+// lib/features/watch_party/data/party_service.dart
+class PartyService {
+  late Peer _peer;
+  final Map<String, DataConnection> _connections = {};
+
+  /// Host: create room
+  Future<String> createRoom(MediaItem media) async {
+    final roomId = const Uuid().v4().substring(0, 8);
+    _peer = Peer(id: roomId);
+    _peer.on<DataConnection>('connection').listen(_onConnection);
+    return roomId;
+  }
+
+  /// Guest: join room
+  Future<void> joinRoom(String roomId) async {
+    _peer = Peer();
+    final conn = _peer.connect(roomId);
+    _setupConnection(conn);
+  }
+
+  /// Broadcast playback action to all peers
+  void broadcast(SyncEvent event) {
+    final json = jsonEncode(event.toJson());
+    for (final conn in _connections.values) {
+      conn.send(json);
+    }
+  }
+
+  void _onConnection(DataConnection conn) => _setupConnection(conn);
+
+  void _setupConnection(DataConnection conn) {
+    _connections[conn.peer] = conn;
+    conn.on('data').listen((data) {
+      final event = SyncEvent.fromJson(jsonDecode(data));
+      onSyncEvent?.call(event);
+    });
+    conn.on('close').listen((_) => _connections.remove(conn.peer));
+  }
+
+  Function(SyncEvent)? onSyncEvent;
+}
+```
+
+### Invite Sharing
+
+```dart
+// Share via system share sheet (WhatsApp, Telegram, etc.)
+final link = 'muvy://party/$roomId?media=$tmdbId&type=movie';
+await Share.share(
+  '🎬 Join my muvy Watch Party!\n\n$link',
+  subject: 'Watch Party Invite',
+);
 ```
 
 ---
@@ -485,7 +631,16 @@ NotifierProvider → Favorites list (backed by Hive)
 - [ ] Episode selector for TV
 - [ ] Source selector fallback
 
-### Phase 6 — Favorites & Polish
+### Phase 6 — Watch Party
+- [ ] PeerDart setup + PartyService
+- [ ] SyncController for playback state sync
+- [ ] WatchPartyPage with player + party overlay
+- [ ] Invite sheet with share_plus (WhatsApp, etc.)
+- [ ] Deep link handling for guest auto-join
+- [ ] Participant list + sync indicator UI
+- [ ] Conflict resolution (timestamp-based)
+
+### Phase 7 — Favorites & Polish
 - [ ] Hive setup for local favorites
 - [ ] Favorites page
 - [ ] Animations, transitions, micro-interactions
