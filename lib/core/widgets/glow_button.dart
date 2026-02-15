@@ -28,9 +28,9 @@ class GlowButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.purplePrimary.withOpacity(0.3),
-            blurRadius: 20,
-            spreadRadius: 2,
+            color: AppColors.purplePrimary.withValues(alpha: 0.6),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

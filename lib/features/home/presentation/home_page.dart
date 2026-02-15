@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import '../../../../router/app_router.gr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:muvy/features/home/data/home_providers.dart';
@@ -31,7 +32,10 @@ class HomePage extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(
+            onPressed: () => context.pushRoute(const SearchRoute()),
+            icon: const Icon(Icons.search),
+          ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.person)),
         ],
       ),
@@ -54,7 +58,10 @@ class HomePage extends ConsumerWidget {
 
           // Popular Movies
           SliverToBoxAdapter(
-            child: SectionHeader(title: 'Popular Movies', onSeeAll: () {}),
+            child: SectionHeader(
+              title: 'Popular Movies',
+              onSeeAll: () => context.pushRoute(const DiscoverRoute()),
+            ),
           ),
           SliverToBoxAdapter(
             child: popularMovies.when(
@@ -72,7 +79,10 @@ class HomePage extends ConsumerWidget {
 
           // Top Rated Movies
           SliverToBoxAdapter(
-            child: SectionHeader(title: 'Top Rated Movies', onSeeAll: () {}),
+            child: SectionHeader(
+              title: 'Top Rated Movies',
+              onSeeAll: () => context.pushRoute(const DiscoverRoute()),
+            ),
           ),
           SliverToBoxAdapter(
             child: topRatedMovies.when(
@@ -88,7 +98,10 @@ class HomePage extends ConsumerWidget {
 
           // Popular TV
           SliverToBoxAdapter(
-            child: SectionHeader(title: 'Popular TV Shows', onSeeAll: () {}),
+            child: SectionHeader(
+              title: 'Popular TV Shows',
+              onSeeAll: () => context.pushRoute(const DiscoverRoute()),
+            ),
           ),
           SliverToBoxAdapter(
             child: popularTv.when(
@@ -104,7 +117,10 @@ class HomePage extends ConsumerWidget {
 
           // Top Rated TV
           SliverToBoxAdapter(
-            child: SectionHeader(title: 'Top Rated TV Shows', onSeeAll: () {}),
+            child: SectionHeader(
+              title: 'Top Rated TV Shows',
+              onSeeAll: () => context.pushRoute(const DiscoverRoute()),
+            ),
           ),
           SliverToBoxAdapter(
             child: topRatedTv.when(
@@ -124,3 +140,4 @@ class HomePage extends ConsumerWidget {
     );
   }
 }
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../theme/app_colors.dart';
+
 
 class ShimmerLoading extends StatelessWidget {
   final double width;
@@ -17,13 +17,13 @@ class ShimmerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: AppColors.surfaceGlass,
-      highlightColor: AppColors.surfaceGlass.withOpacity(0.8),
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[700]!,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
+          color: Colors.black.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),

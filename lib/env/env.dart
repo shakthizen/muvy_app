@@ -4,6 +4,6 @@ part 'env.g.dart';
 
 @Envied(path: '.env')
 abstract class Env {
-  @EnviedField(varName: 'TMDB_API_KEY', obfuscate: false)
+  @EnviedField(varName: 'TMDB_API_KEY', obfuscate: true)
   static final String tmdbApiKey = _Env.tmdbApiKey;
 }

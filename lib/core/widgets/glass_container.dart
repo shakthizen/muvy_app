@@ -34,15 +34,14 @@ class GlassContainer extends StatelessWidget {
       padding: padding,
       margin: margin,
       decoration: BoxDecoration(
-        color: AppColors.surfaceGlass.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: AppColors.purplePrimary.withOpacity(borderOpacity),
+          color: AppColors.purplePrimary.withValues(alpha: borderOpacity),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.purplePrimary.withOpacity(0.08),
+            color: AppColors.purplePrimary.withValues(alpha: 0.08),
             blurRadius: 24,
             spreadRadius: 0,
           ),
@@ -52,7 +51,10 @@ class GlassContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: child,
+          child: Container(
+            color: AppColors.surfaceGlass.withValues(alpha: bgOpacity),
+            child: child,
+          ),
         ),
       ),
     );

@@ -12,6 +12,7 @@ class AppColors {
   
   // Aliases
   static const Color background = backgroundDark;
+  static const Color surface = surfaceDark;
   static const Color primary = purplePrimary;
   
   static const Color textPrimary = Color(0xFFF1F5F9);
