@@ -67,7 +67,8 @@ class HomePage extends ConsumerWidget {
             child: popularMovies.when(
               data: (movies) => HorizontalList(
                 items: movies,
-                onItemTap: (movie) {}, // Navigate to detail
+                onItemTap: (movie) =>
+                    context.pushRoute(MovieDetailsRoute(movieId: movie.id)),
               ),
               loading: () => const SizedBox(
                 height: 220,
@@ -86,8 +87,11 @@ class HomePage extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: topRatedMovies.when(
-              data: (movies) =>
-                  HorizontalList(items: movies, onItemTap: (movie) {}),
+              data: (movies) => HorizontalList(
+                items: movies,
+                onItemTap: (movie) =>
+                    context.pushRoute(MovieDetailsRoute(movieId: movie.id)),
+              ),
               loading: () => const SizedBox(
                 height: 220,
                 child: Center(child: CircularProgressIndicator()),
@@ -105,8 +109,11 @@ class HomePage extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: popularTv.when(
-              data: (shows) =>
-                  HorizontalList(items: shows, onItemTap: (show) {}),
+              data: (shows) => HorizontalList(
+                items: shows,
+                onItemTap: (show) =>
+                    context.pushRoute(TvDetailsRoute(tvId: show.id)),
+              ),
               loading: () => const SizedBox(
                 height: 220,
                 child: Center(child: CircularProgressIndicator()),
@@ -124,8 +131,11 @@ class HomePage extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: topRatedTv.when(
-              data: (shows) =>
-                  HorizontalList(items: shows, onItemTap: (show) {}),
+              data: (shows) => HorizontalList(
+                items: shows,
+                onItemTap: (show) =>
+                    context.pushRoute(TvDetailsRoute(tvId: show.id)),
+              ),
               loading: () => const SizedBox(
                 height: 220,
                 child: Center(child: CircularProgressIndicator()),

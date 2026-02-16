@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import '../../../../router/app_router.gr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/discover_providers.dart';
@@ -147,7 +148,7 @@ class _DiscoverPageState extends ConsumerState<DiscoverPage> {
                       posterPath: movie.posterPath,
                       voteAverage: movie.voteAverage,
                       onTap: () {
-                        // TODO: Navigate to detail
+                        context.pushRoute(MovieDetailsRoute(movieId: movie.id));
                       },
                     );
                   },

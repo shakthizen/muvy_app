@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import '../../../../router/app_router.gr.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -95,7 +97,11 @@ class FeaturedCarousel extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.pushRoute(
+                          MovieDetailsRoute(movieId: featured.id),
+                        );
+                      },
                       icon: const Icon(Icons.info_outline, color: Colors.white),
                       label: const Text(
                         'More Info',

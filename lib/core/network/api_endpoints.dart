@@ -19,6 +19,19 @@ class ApiEndpoints {
   
   static const String searchMulti = '/search/multi';
 
+  // Details
+  static String movieDetails(int id) => '/movie/$id';
+  static String tvDetails(int id) => '/tv/$id';
+
+  static String movieCredits(int id) => '/movie/$id/credits';
+  static String tvCredits(int id) => '/tv/$id/credits';
+
+  static String movieSimilar(int id) => '/movie/$id/similar';
+  static String tvSimilar(int id) => '/tv/$id/similar';
+
+  static String tvSeason(int id, int seasonNumber) =>
+      '/tv/$id/season/$seasonNumber';
+
   // VidSrc
   static const String vidSrcBaseUrl = 'https://vidsrc.to/embed';
   static String vidSrcMovie(int tmdbId) => '$vidSrcBaseUrl/movie/$tmdbId';

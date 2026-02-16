@@ -8,5 +8,7 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: HomeRoute.page, initial: true),
     AutoRoute(page: DiscoverRoute.page),
     AutoRoute(page: SearchRoute.page),
+    AutoRoute(page: MovieDetailsRoute.page, path: '/movie/:id'),
+    AutoRoute(page: TvDetailsRoute.page, path: '/tv/:id'),
   ];
 }

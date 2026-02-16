@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:auto_route/auto_route.dart';
+import '../../../../router/app_router.gr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -40,7 +42,11 @@ class SearchResultTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Navigate to details (to be implemented)
+        if (result is Movie) {
+          context.pushRoute(MovieDetailsRoute(movieId: (result as Movie).id));
+        } else if (result is TvShow) {
+          context.pushRoute(TvDetailsRoute(tvId: (result as TvShow).id));
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
